@@ -1,5 +1,9 @@
 # async_deps
 
+[![CI](https://github.com/wbadart/async_deps/workflows/CI/badge.svg)][ci]
+
+[ci]: https://github.com/wbadart/async_deps/actions?query=workflow%3ACI
+
 For when your dependencies aren't quite ready yet.
 
 ## Usage
