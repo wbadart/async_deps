@@ -1,6 +1,6 @@
 # async_deps
 
-For when your arguments aren't quite ready yet.
+For when your dependencies aren't quite ready yet.
 
 ## Usage
 
@@ -35,3 +35,5 @@ if __name__ == "__main__":
 The `DepServer` is now listening for JSON data on stdin. As soon as it sees an
 object that shares its `uuid` field with `my_processor`'s `initial_data`, it
 will fulfil the request, and `my_processor` will resume with `extra_data`.
+
+Please see the [`examples/`](./examples) directory for more information.
