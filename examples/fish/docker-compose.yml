@@ -1,0 +1,62 @@
+version: "3.4"
+services:
+  # fish_weight_predictor and fish_length2_predictor are relatively
+  # unremarkable examples of
+  # https://github.com/wbadart/rmq_py_caller/tree/master/examples/sklearn
+  # Just make note of the RabbitMQ configuration; they'll each get data from
+  # their own queue and then publish to the `classify` exchange.
+  fish_weight_predictor:
+    build: .
+    image: fish_predictor
+    volumes:
+    - ${PWD}/weight.joblib:/models/weight.joblib
+    environment:
+      PY_SETUP: "from fish.predict import setup_model, regress"
+      PY_TARGET: "setup_model(regress, '/models/weight.joblib')"
+
+      INPUT_QUEUE: "raw.weight"
+      OUTPUT_EXCHANGE: "classify"
+      OUTPUT_ROUTING_KEY: "weight"
+      RABTAP_AMQPURI: "amqp://guest:guest@host.docker.internal:5672/"
+
+  fish_length2_predictor:
+    build: .
+    image: fish_predictor
+    volumes:
+    - ${PWD}/length2.joblib:/models/length2.joblib
+    environment:
+      PY_SETUP: "from fish.predict import setup_model, regress"
+      PY_TARGET: "setup_model(regress, '/models/length2.joblib')"
+
+      INPUT_QUEUE: "raw.length2"
+      OUTPUT_EXCHANGE: "classify"
+      OUTPUT_ROUTING_KEY: "length2"
+      RABTAP_AMQPURI: "amqp://guest:guest@host.docker.internal:5672/"
+
+  fish_species_predictor:
+    build: .
+    image: fish_predictor
+    volumes:
+    - ${PWD}/species.joblib:/models/species.joblib
+    environment:
+      # Here's where things start to get interesting. Recall from rmq_py_caller
+      # that PY_SETUP is called one when the service starts, and PY_TARGET is
+      # called for each message from the input queue.
+      # Here, PY_SETUP defines `route_input`, which either sends the input to
+      # be classified by the model or submits it to async_deps.
+      PY_SETUP: |
+        import async_deps
+        from fish.predict import setup_model, classify
+        model = setup_model(classify, '/models/species.joblib')
+        def route_input(obj):
+          if obj["key"] == "raw":
+            return model(obj)
+          else:
+            async_deps.submit(obj)
+      PY_TARGET: "route_input"
+      # The `key` field referenced in predict.py actually comes from here
+      INPUT_ADAPTER: "(.Body | @base64d | fromjson) * { key: .RoutingKey }"
+
+      INPUT_QUEUE: "classify"
+      OUTPUT_EXCHANGE: "final"
+      RABTAP_AMQPURI: "amqp://guest:guest@host.docker.internal:5672/"
