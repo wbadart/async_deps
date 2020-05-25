@@ -11,7 +11,7 @@ species predictor needs &mdash; so we need two extra models to fill those in.
 
 [dataset]: https://www.kaggle.com/aungpyaeap/fish-market
 
-To follow along (make sure [`Poetry`][poetry] is installed first):
+To follow along (make sure [`poetry`][poetry] is installed first):
 
 [poetry]: https://python-poetry.org
 
@@ -23,7 +23,7 @@ git clone https://github.com/wbadart/async_deps.git \
 
 Now, you can train the models:
 
-``sh
+```sh
 python -m fish.train
 ```
 
@@ -37,11 +37,11 @@ $ ls *.joblib
 length2.joblib species.joblib weight.joblib
 ```
 
-At this point, read through [`predict.py`](./fish/predict.py) and
+At this point, read through [`fish/predict.py`](./fish/predict.py) and
 [`docker-compose.yml`](./docker-compose.yml). Respectively, they will show you
 the "request" and "submit" sides of the async_deps coin. Also check out
-[`rabbtimq.svg`](./rabbitmq.svg) to visualize the input queues and output
-exchanges configured by `docker-compose.yml`.
+[`config/queues.svg`](./config/queues.svg) to visualize the input queues and
+output exchanges configured by `docker-compose.yml`.
 
 You can now spin up the three services:
 
@@ -49,20 +49,19 @@ You can now spin up the three services:
 docker-compose up
 ```
 
-Now wait until the service are ready (it'll take a minute to build the
-containers the first time). When they're ready, you'll see:
+Don't be alarmed bu the predictor services repeatedly failing; they'll connect
+just fine when the RabbitMQ server finishes spinning up (in fact, you'll be
+able to see them authenticate in the `rabbitmq_1` logs; that's your sign the
+system is ready).
 
-```
-...
-Creating fish_fish_weight_predictor_1  ... done
-Creating fish_fish_length2_predictor_1 ... done
-Creating fish_fish_species_predictor_1 ... done
-Attaching to fish_fish_length2_predictor_1, fish_fish_weight_predictor_1, fish_fish_species_predictor_1
-```
+Now visit the [`raw` exchange][raw] in your RabbitMQ management interface and
+paste in one (just one!) of the lines from
+[`data/sample.ndjson`](./data/sample.ndjson) into the **Publish message**
+payload. Set the routing key to `raw` and fire away!
 
-Now visit the `raw` exchange in your RabbitMQ management interface and paste in
-one (just one!) of the lines from [`data/sample.ndjson`](./data/sample.ndjson)
-into **Publish message**. Set the routing key to `raw` and fire away!
+[raw]: http://localhost:15672/#/exchanges/%2F/raw
 
-Now click over to the `results` queue and **Get messages**. Behold, the input
-data has been filled in with the three predictions!
+Now click over to the [`results` queue][results] and **Get messages**. Behold,
+the input data has been filled in with the three predictions!
+
+[results]: http://localhost:15672/#/queues/%2F/results

@@ -12,11 +12,11 @@
 <!-- root -->
 <g id="node1" class="node">
 <title>root</title>
-<polygon fill="none" stroke="black" points="39.12,-268.5 39.12,-334.5 191.99,-334.5 191.99,-268.5 39.12,-268.5"/>
+<polygon fill="none" stroke="black" points="35.62,-268.5 35.62,-334.5 195.49,-334.5 195.49,-268.5 35.62,-268.5"/>
 <text text-anchor="middle" x="115.56" y="-319.3" font-family="Times,serif" font-size="14.00">RabbitMQ 3.8.3</text>
-<polyline fill="none" stroke="black" points="39.12,-312.5 191.99,-312.5 "/>
-<text text-anchor="middle" x="115.56" y="-297.3" font-family="Times,serif" font-size="14.00">http://localhost:8080/api</text>
-<polyline fill="none" stroke="black" points="39.12,-290.5 191.99,-290.5 "/>
+<polyline fill="none" stroke="black" points="35.62,-312.5 195.49,-312.5 "/>
+<text text-anchor="middle" x="115.56" y="-297.3" font-family="Times,serif" font-size="14.00">http://localhost:15672/api</text>
+<polyline fill="none" stroke="black" points="35.62,-290.5 195.49,-290.5 "/>
 <text text-anchor="middle" x="115.56" y="-275.3" font-family="Times,serif" font-size="14.00">rabbit@my&#45;rabbit</text>
 </g>
 <!-- vhost_/ -->
@@ -105,7 +105,7 @@
 <path fill="none" stroke="black" d="M115.56,-91.42C115.56,-77.2 115.56,-60.26 115.56,-45"/>
 </g>
 <!-- boundqueue_results -->
-<g id="node9" class="node">
+<g id="node7" class="node">
 <title>boundqueue_results</title>
 <polygon fill="none" stroke="black" points="0,-0.5 0,-44.5 65.11,-44.5 65.11,-0.5 0,-0.5"/>
 <text text-anchor="middle" x="32.56" y="-29.3" font-family="Times,serif" font-size="14.00">results</text>
@@ -128,7 +128,7 @@
 <text text-anchor="middle" x="148.05" y="-65" font-family="Times,serif" font-size="10.00">raw</text>
 </g>
 <!-- boundqueue_raw.length2 -->
-<g id="node7" class="node">
+<g id="node8" class="node">
 <title>boundqueue_raw.length2</title>
 <polygon fill="none" stroke="black" points="261.77,-0.5 261.77,-44.5 343.34,-44.5 343.34,-0.5 261.77,-0.5"/>
 <text text-anchor="middle" x="302.56" y="-29.3" font-family="Times,serif" font-size="14.00">raw.length2</text>
@@ -145,7 +145,7 @@
 <path fill="none" stroke="black" d="M234.35,-113.33C263.84,-101.9 302.56,-80.2 302.56,-45"/>
 </g>
 <!-- boundqueue_raw.weight -->
-<g id="node8" class="node">
+<g id="node9" class="node">
 <title>boundqueue_raw.weight</title>
 <polygon fill="none" stroke="black" points="165.71,-0.5 165.71,-44.5 243.4,-44.5 243.4,-0.5 165.71,-0.5"/>
 <text text-anchor="middle" x="204.56" y="-29.3" font-family="Times,serif" font-size="14.00">raw.weight</text>
