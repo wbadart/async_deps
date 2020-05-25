@@ -21,21 +21,6 @@ class DepServer:
     _log = logging.getLogger(__name__)
 
     @classmethod
-    def submit(cls, obj):
-        """
-        Cache `obj` and see if any outstanding requests are interested in it.
-        """
-        cls._log.info("Got submission: %s", obj)
-        cls._cache.append(obj)
-        for query, response in cls._unfulfilled_requests.items():
-            cls._log.debug("Checking query: %s", query)
-            if cls._match(obj, query):
-                response.set_result(obj)
-                cls._log.info("Query match! (%s)", query)
-        # TODO: delete filled request somehow w/o cancelling Future
-        cls._log.debug("Data handled. Current cache state:\n%s", cls._cache)
-
-    @classmethod
     async def request(cls, **query):
         """
         A coroutine which will eventually return the first submission to match
@@ -58,6 +43,21 @@ class DepServer:
         response = asyncio.Future()
         cls._unfulfilled_requests[query] = response
         return await response
+
+    @classmethod
+    def submit(cls, obj):
+        """
+        Cache `obj` and see if any outstanding requests are interested in it.
+        """
+        cls._log.info("Got submission: %s", obj)
+        cls._cache.append(obj)
+        for query, response in cls._unfulfilled_requests.items():
+            cls._log.debug("Checking query: %s", query)
+            if cls._match(obj, query):
+                response.set_result(obj)
+                cls._log.info("Query match! (%s)", query)
+        # TODO: delete filled request somehow w/o cancelling Future
+        cls._log.debug("Data handled. Current cache state:\n%s", cls._cache)
 
     @staticmethod
     def _match(obj, query):
