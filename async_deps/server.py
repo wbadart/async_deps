@@ -7,21 +7,37 @@ created: MAY 2020
 """
 
 import asyncio
-import json
-import sys
+import logging
 
 
 class DepServer:
-    """Cache JSON data from stdin and asynchronously deliver it to clients."""
+    """Cache JSON submissions and asynchronously deliver them to clients."""
 
-    _cache = []  # TODO: size- and time-based cache invalidation options
+    # TODO: size- and time-based cache invalidation options, better data structure
+    _cache = []
     _unfulfilled_requests = {}
+    _log = logging.getLogger(__name__)
 
     @classmethod
-    def request(cls, **query):
+    def submit(cls, obj):
         """
-        Return a Future that resolves with the eventual input data matching
-        `query`. `query` specifies the fields and desired values of the input
+        Cache `obj` and see if any outstanding requests are interested in it.
+        """
+        cls._log.info("Got submission: %s", obj)
+        cls._cache.append(obj)
+        for query, response in cls._unfulfilled_requests.items():
+            cls._log.debug("Checking query: %s", query)
+            if cls._match(obj, query):
+                response.set_result(obj)
+                cls._log.info("Query match! (%s)", query)
+        # TODO: delete filled request somehow w/o cancelling Future
+        cls._log.debug("Data handled. Current cache state:\n%s", cls._cache)
+
+    @classmethod
+    async def request(cls, **query):
+        """
+        A coroutine which will eventually return the first submission to match
+        `**query`. `query` specifies the fields and desired values of the input
         data. For example:
 
         >>> DepServer.request(uuid="abc123", username="bob")
@@ -29,47 +45,17 @@ class DepServer:
         will be an awaitable which resolves with the first input data object to
         have `"uuid": "abc123"` and `"username": "bob"`.
         """
+        cls._log.info("Got query: %s", query)
         query = tuple(query.items())
-        response = asyncio.Future()
         for obj in cls._cache:
+            cls._log.debug("Checking cached obj: %s", obj)
             if cls._match(obj, query):
-                response.set_result(obj)
-                break
-        else:
-            cls._unfulfilled_requests[query] = response
-        return response
-
-    @classmethod
-    def start_application(cls, main):
-        """
-        The preferred entry point for DepServer programs. `main` should be a
-        coroutine with no arguments that starts the application.
-        """
-        loop = asyncio.get_event_loop()
-        loop.create_task(main())
-        loop.run_until_complete(cls.run(loop))
-        loop.close()
-
-    @classmethod
-    async def run(cls, loop):
-        """
-        Alternate entry point for DepServer programs. Should be called like:
-
-        >>> loop.run_until_complete(DepServer.run(loop))
-
-        regardless of where your `loop` came from.
-        """
-        while True:
-            line = await loop.run_in_executor(None, sys.stdin.readline)
-            cls._on_data(json.loads(line))
-
-    @classmethod
-    def _on_data(cls, obj):
-        cls._cache.append(obj)
-        for query, response in list(cls._unfulfilled_requests.items()):
-            if cls._match(obj, query):
-                response.set_result(obj)
-                del cls._unfulfilled_requests[query]
+                cls._log.info("Data match! (%s)", obj)
+                return obj
+        cls._log.info("No matching data yet. Awaiting future...")
+        response = asyncio.Future()
+        cls._unfulfilled_requests[query] = response
+        return await response
 
     @staticmethod
     def _match(obj, query):
