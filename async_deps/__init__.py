@@ -6,6 +6,6 @@ in the project README and in the `async_deps.server` module.
 created: MAY 2020
 """
 
-from async_deps.server import DepServer
+from async_deps.server import request, submit
 
 __version__ = "0.1.0"

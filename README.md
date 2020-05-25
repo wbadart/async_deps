@@ -13,10 +13,10 @@ pip install git+https://github.com/wbadart/async_deps.git
 Now, in your data-needing coroutines, add a request to the dependency server:
 
 ```py
-from async_deps import DepServer
+import async_deps
 
 async def my_processor(initial_data):
-    extra_data = await DepServer.request(uuid=initial_data["uuid"])
+    extra_data = await async_deps.request(uuid=initial_data["uuid"])
     initial_data.update(extra_data)
     return initial_data
 ```

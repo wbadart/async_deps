@@ -9,6 +9,8 @@ created: MAY 2020
 import asyncio
 import logging
 
+__all__ = ["request", "submit"]
+
 
 class DepServer:
     """Cache JSON submissions and asynchronously deliver them to clients."""
@@ -40,7 +42,7 @@ class DepServer:
         `**query`. `query` specifies the fields and desired values of the input
         data. For example:
 
-        >>> DepServer.request(uuid="abc123", username="bob")
+        >>> request(uuid="abc123", username="bob")
 
         will be an awaitable which resolves with the first input data object to
         have `"uuid": "abc123"` and `"username": "bob"`.
@@ -60,3 +62,8 @@ class DepServer:
     @staticmethod
     def _match(obj, query):
         return all(key in obj and obj[key] == value for key, value in query)
+
+
+# Aliases for DepServer's public interface
+request = DepServer.request
+submit = DepServer.submit
