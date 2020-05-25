@@ -65,5 +65,5 @@ class DepServer:
 
 
 # Aliases for DepServer's public interface
-request = DepServer.request
-submit = DepServer.submit
+request = DepServer.request  # pylint: disable=invalid-name
+submit = DepServer.submit  # pylint: disable=invalid-name
