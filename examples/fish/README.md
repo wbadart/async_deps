@@ -18,10 +18,11 @@ To follow along (make sure [`poetry`][poetry] is installed first):
 ```sh
 git clone https://github.com/wbadart/async_deps.git \
     && cd async_deps/examples/fish \
-    && poetry shell
+    && poetry shell \
+    && poetry install
 ```
 
-Now, you can train the models:
+Now you can train the models:
 
 ```sh
 python -m fish.train
@@ -54,14 +55,22 @@ just fine when the RabbitMQ server finishes spinning up (in fact, you'll be
 able to see them authenticate in the `rabbitmq_1` logs; that's your sign the
 system is ready).
 
-Now visit the [`raw` exchange][raw] in your RabbitMQ management interface and
-paste in one (just one!) of the lines from
+Now visit the [`raw` exchange][raw] in your RabbitMQ management interface
+(username `guest`, password `guest`) and paste any line (just one!) from
 [`data/sample.ndjson`](./data/sample.ndjson) into the **Publish message**
 payload. Set the routing key to `raw` and fire away!
 
 [raw]: http://localhost:15672/#/exchanges/%2F/raw
 
+```json
+{"Length1":15,"Length3":17.2,"Height":4.5924,"Width":2.6316,"ID":0}
+```
+
 Now click over to the [`results` queue][results] and **Get messages**. Behold,
 the input data has been filled in with the three predictions!
 
 [results]: http://localhost:15672/#/queues/%2F/results
+
+```json
+{"ID":0,"Length1":15,"Length3":17.2,"Height":4.5924,"Width":2.6316,"Weight":51.5,"Length2":16.2,"Species":"Bream"}
+```
