@@ -21,19 +21,33 @@ async def my_processor(initial_data):
     return initial_data
 ```
 
-Now, simply use the `DepServer` to start your application, and you're off:
+Your coroutine `my_processor` will now be awaiting that `extra_data`. In the
+meantime, another coroutine can submit data:
 
 ```py
-async def main():
-    # Do some stuff, likely with my_processor
-    # ...
+import asyncio, json
+import async_deps
 
-if __name__ == "__main__":
-    DepServer.start_application(main)
+async def poll_api(seconds):
+    while True:
+        response = MyAwesomeAPI.fetch("http://coolbeans.com/api?format=json")
+        for data in json.loads(response):
+            async_deps.submit(data)
+        await asyncio.sleep(seconds)
 ```
 
-The `DepServer` is now listening for JSON data on stdin. As soon as it sees an
-object that shares its `uuid` field with `my_processor`'s `initial_data`, it
-will fulfil the request, and `my_processor` will resume with `extra_data`.
+Don't forget to schedule the poller!
+
+```py
+import asyncio
+
+async def main():
+    asyncio.create_task(poll_api(seconds=15))
+    process_results = await my_processor(initial_data={"hello": "world"})
+    print("Done!", process_results)
+    
+if __name__ == "__main__":
+    asyncio.run(main())
+```
 
 Please see the [`examples/`](./examples) directory for more information.
