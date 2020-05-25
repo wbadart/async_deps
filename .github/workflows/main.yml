@@ -1,0 +1,21 @@
+name: CI
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v1
+    - uses: dschep/install-poetry-action@v1.3
+    - name: Install dependencies
+      run: poetry install
+    - name: Lint
+      run: |
+        poetry install
+        poetry run black --check async_deps
+        poetry run pylint --disable=W0511 async_deps
