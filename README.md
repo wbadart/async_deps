@@ -10,16 +10,21 @@ First, install the package:
 pip install git+https://github.com/wbadart/async_deps.git
 ```
 
-Now, in your data-needing coroutines, add a request to the dependency server:
+Now request the data you need:
 
 ```py
 import async_deps
 
-async def my_processor(initial_data):
-    extra_data = await async_deps.request(uuid=initial_data["uuid"])
-    initial_data.update(extra_data)
-    return initial_data
+async def my_processor(message):
+    extra_data = await async_deps.request(name="bob", occupation="builder")
+    extra_data.update({"greeting": message})
+    return extra_data
 ```
+
+`async_deps.request` takes a collection of keyword arguments to match against
+submitted data. In this example, we'll receive the first submitted object with
+`obj["name"] == "bob"` and `obj["occupation"] == "builder"`. In less contrived
+cases, the query will probably be based on the arguments to the coroutine.
 
 Your coroutine `my_processor` will now be awaiting that `extra_data`. In the
 meantime, another coroutine can submit data:
@@ -31,20 +36,24 @@ import async_deps
 async def poll_api(seconds):
     while True:
         response = MyAwesomeAPI.fetch("http://coolbeans.com/api?format=json")
-        for data in json.loads(response):
-            async_deps.submit(data)
+        async_deps.submit(response)
         await asyncio.sleep(seconds)
 ```
 
-Don't forget to schedule the poller!
+Don't forget to schedule the poller! (And please note: polling represents what
+is probably the simplest possible approach to submission. You have the full
+power of [`asyncio`][aio] behind you to create much more sophisticated
+solutions!)
+
+[aio]: https://docs.python.org/3/library/asyncio.html
 
 ```py
 import asyncio
 
 async def main():
     asyncio.create_task(poll_api(seconds=15))
-    process_results = await my_processor(initial_data={"hello": "world"})
-    print("Done!", process_results)
+    results = await my_processor(message="hola")
+    print("Done!", results)
     
 if __name__ == "__main__":
     asyncio.run(main())
