@@ -54,8 +54,17 @@ class DepServer:
         for query, response in list(cls._unfulfilled_requests.items()):
             cls._log.debug("Checking query: %s", query)
             if cls._match(obj, query):
-                response.set_result(obj)
                 cls._log.info("Query match! (%s)", query)
+                try:
+                    response.set_result(obj)
+                except asyncio.InvalidStateError as exception:
+                    cls._log.warning(
+                        "I just tried to fulfil a fulfilled request (%s) with "
+                        "object:\n  %s\n  How did this happen?\n  Error: %s",
+                        query,
+                        obj,
+                        exception,
+                    )
                 del cls._unfulfilled_requests[query]
         cls._log.debug("Data handled. Current cache state:\n%s", cls._cache)
 
