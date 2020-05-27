@@ -18,4 +18,5 @@ jobs:
       run: |
         poetry install
         poetry run black --check async_deps
-        poetry run pylint --disable=W0511 async_deps
+        # I prefer having symmetrical branches
+        poetry run pylint --disable=no-else-return async_deps
