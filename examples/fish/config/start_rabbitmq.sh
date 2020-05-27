@@ -1,7 +1,6 @@
 #!/bin/bash
 
-set -x
-set -e
+set -xe
 
 echo 'loopback_users = none' >> /etc/rabbitmq/rabbitmq.conf
 rabbitmq-server &
