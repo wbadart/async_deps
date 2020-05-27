@@ -17,10 +17,12 @@ pip install git+https://github.com/wbadart/async_deps.git
 Now request the data you need:
 
 ```py
-import async_deps
+from async_deps import new_cache
+
+cache = new_cache("name", "occupation")
 
 async def my_processor(message):
-    extra_data = await async_deps.request(name="bob", occupation="builder")
+    extra_data = await cache.request(name="bob", occupation="builder")
     extra_data.update({"greeting": message})
     return extra_data
 ```
@@ -35,12 +37,11 @@ meantime, another coroutine can submit data:
 
 ```py
 import asyncio, json
-import async_deps
 
 async def poll_api(seconds):
     while True:
         response = MyAwesomeAPI.fetch("http://coolbeans.com/api?format=json")
-        async_deps.submit(response)
+        cache.submit(response)
         await asyncio.sleep(seconds)
 ```
 
