@@ -53,14 +53,13 @@ services:
       # been defined in a module of `fish`? Probably. I'm defining it here for
       # illustration purposes.
       PY_SETUP: |
-        import async_deps
-        from fish.predict import setup_model, classify
+        from fish.predict import CACHE, classify, setup_model
         model = setup_model(classify, '/models/species.joblib')
         def route_input(obj):
           if obj["key"] == "raw":
             return model(obj)
           else:
-            async_deps.submit(obj)
+            CACHE.submit(obj)
       PY_TARGET: "route_input"
 
       # The `key` field referenced in predict.py actually comes from here

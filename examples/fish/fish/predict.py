@@ -35,6 +35,9 @@ def regress(fish, model):
 # Final classification
 # ==========
 
+CACHE = async_deps.new_cache("ID", "key")
+
+
 async def classify(fish, model):
     # Wait until we have the results of the Weight and Length2 predictions; we
     # can't run our classifier without them.
@@ -44,8 +47,8 @@ async def classify(fish, model):
     #     weight = {"ID": <same ID as `fish`>, "key": "weight", "result": ???}
     #
     # And a similarly-shaped result for length2.
-    weight = await async_deps.request(ID=fish["ID"], key="weight")
-    length2 = await async_deps.request(ID=fish["ID"], key="length2")
+    weight = await CACHE.request(ID=fish["ID"], key="weight")
+    length2 = await CACHE.request(ID=fish["ID"], key="length2")
 
     # Same story as `regress`: singleton list => 1-row DataFrame
     df = pd.DataFrame.from_records([fish], columns=COLUMNS)
