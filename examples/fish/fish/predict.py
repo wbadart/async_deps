@@ -1,4 +1,4 @@
-"""rmq_sklearn/predict.py
+"""examples/fish/fish/predict.py
 
 Run the fish AI on some input data.
 created: MAY 2020
@@ -19,6 +19,7 @@ COLUMNS = ["ID", "Length1", "Length3", "Height", "Width"]
 # Initial regressions
 # ==========
 
+
 def regress(fish, model):
     # Put `fish` in a singleton list since we'll be getting one object at a time
     df = pd.DataFrame.from_records([fish], columns=COLUMNS)
@@ -30,6 +31,7 @@ def regress(fish, model):
     # Analogously to above, calling to_dict on our 1-row data frame will give
     # us a singleton list. Use [0] to unwrap the result from that list
     return df[["ID", "result"]].to_dict(orient="records")[0]
+
 
 # ==========
 # Final classification
@@ -60,9 +62,11 @@ async def classify(fish, model):
 
     return df.to_dict(orient="records")[0]
 
+
 # ==========
 # Misc
 # ==========
+
 
 def setup_model(func, path):
     model = joblib.load(path)

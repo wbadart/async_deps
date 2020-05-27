@@ -74,3 +74,14 @@ the input data has been filled in with the three predictions!
 ```json
 {"ID":0,"Length1":15,"Length3":17.2,"Height":4.5924,"Width":2.6316,"Weight":51.5,"Length2":16.2,"Species":"Bream"}
 ```
+
+## Batching
+
+In "production" it's probably more efficient to run your model on batches.
+Check out [`fish/predict_batch.py`](./fish/predict_batch.py) (and notice how
+similar it is to the original `predict.py`) for one approach. To see it in
+action, switch `from fish.predict import ...` to `from fish.predict_batch
+import ...` in each of the three `PY_SETUP` variables and run `docker-compose
+up`. Paste in the whole
+[`data/sample.batch.ndjson`](./data/sample.batch.ndjson) (again, with routing
+key `raw`) as the input.
