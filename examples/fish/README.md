@@ -50,7 +50,7 @@ You can now spin up the three services:
 docker-compose up
 ```
 
-Don't be alarmed bu the predictor services repeatedly failing; they'll connect
+Don't be alarmed by the predictor services repeatedly failing; they'll connect
 just fine when the RabbitMQ server finishes spinning up (in fact, you'll be
 able to see them authenticate in the `rabbitmq_1` logs; that's your sign the
 system is ready).
