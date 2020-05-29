@@ -7,11 +7,14 @@ created: MAY 2020
 """
 
 import asyncio
+import itertools as it
 import logging
+import operator as op
 from collections import namedtuple
+from functools import wraps
 from random import randint
 
-__all__ = ["new_cache"]
+__all__ = ["new_cache", "_"]
 
 
 def new_cache(*index_on):
@@ -86,4 +89,34 @@ def new_cache(*index_on):
             log.debug("No matching request. Caching...")
             cache[index] = obj
 
-    return namedtuple("Cache", "request submit")(request, submit)
+    def inject(**queries):
+        for arg, query in queries.items():
+            if set(query) != index_on:
+                raise ValueError(
+                    "You requested something I'm not indexing on "
+                    f"(query{set(query)} != index_on{index_on}, arg{arg})"
+                )
+
+        def _decorator(coro):
+            @wraps(coro)
+            async def _inner(obj, *args, **kwargs):
+                requests = (
+                    {k: v(obj) if callable(v) else v for k, v in query.items()}
+                    for query in queries.values()
+                )
+                arg_results = await asyncio.gather(*it.starmap(request, requests))
+                return await coro(
+                    obj, *args, **kwargs, **dict(zip(queries, arg_results))
+                )
+
+        return _decorator
+
+    return namedtuple("Cache", "request submit inject")(request, submit, inject)
+
+
+class _DeferredItemAccess:
+    def __getitem__(self, name):
+        return op.itemgetter(name)
+
+
+_ = _DeferredItemAccess()
