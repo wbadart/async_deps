@@ -26,7 +26,7 @@ async def my_processor(message):
     return extra_data
 ```
 
-`async_deps.request` takes a collection of keyword arguments to match against
+`Cache.request` takes a collection of keyword arguments to match against
 submitted data. In this example, we'll receive the first submitted object with
 `obj["name"] == "bob"` and `obj["occupation"] == "builder"`. In less contrived
 cases, the query will probably be based on the arguments to the coroutine.
