@@ -8,7 +8,6 @@ created: MAY 2020
 
 import asyncio
 import inspect
-import itertools as it
 import operator as op
 from functools import wraps
 from warnings import warn
@@ -103,6 +102,7 @@ class Cache:
 
 
 class _DeferredItemAccess:
+    # pylint: disable=too-few-public-methods
     __getitem__ = op.itemgetter
 
 
