@@ -18,8 +18,7 @@ Now request the data you need:
 
 ```py
 from async_deps import Cache
-
-cache = Cache("name", "occupation")
+cache = Cache(index_on=["name", "occupation"])
 
 async def my_processor(message):
     extra_data = await cache.request(name="bob", occupation="builder")
@@ -32,7 +31,22 @@ submitted data. In this example, we'll receive the first submitted object with
 `obj["name"] == "bob"` and `obj["occupation"] == "builder"`. In less contrived
 cases, the query will probably be based on the arguments to the coroutine.
 
-Your coroutine `my_processor` will now be awaiting that `extra_data`. In the
+Don't feel like writing a coroutine? No problem, ask your cache to inject the
+late data as arguments to a plain function:
+
+```py
+# Functionally equivalent to the above snippet:
+@cache.inject(extra_data={"name": "bob", "occupation": "builder"})
+def my_processor(message, extra_data):
+    extra_data.update({"greeting": message})
+    return extra_data
+```
+
+Just keep in mind that `@inject` turns the decorated function into a coroutine
+(can't get async for free!) so you'll still need to `await` its result at some
+point.
+
+Your `my_processor` coroutine will now be awaiting that `extra_data`. In the
 meantime, another coroutine can submit data:
 
 ```py

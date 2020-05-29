@@ -84,11 +84,13 @@ class Cache:
                     {k: v(obj) if callable(v) else v for k, v in query.items()}
                     for query in queries.values()
                 )
-                arg_results = await asyncio.gather(*it.starmap(self.request, requests))
+                arg_results = await asyncio.gather(*_splatmap(self.request, requests))
                 result = func(obj, *args, **kwargs, **dict(zip(queries, arg_results)))
                 if inspect.isawaitable(result):
                     result = await result
                 return result
+
+            return _inner
 
         return _decorator
 
@@ -105,3 +107,9 @@ class _DeferredItemAccess:
 
 
 _ = _DeferredItemAccess()
+
+
+def _splatmap(func, iterable):
+    # Like itertools.starmap, but applies kwargs with double splat.
+    for kwargs in iterable:
+        yield func(**kwargs)
