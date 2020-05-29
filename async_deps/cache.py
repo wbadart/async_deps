@@ -1,122 +1,107 @@
 """async_deps/cache.py
 
-Exports `new_cache`, a function for managing incoming data and asynchronously
+Exports `Cache`, a class for managing incoming data and asynchronously
 dispatching that data to clients who request it.
 
 created: MAY 2020
 """
 
 import asyncio
+import inspect
 import itertools as it
-import logging
 import operator as op
-from collections import namedtuple
 from functools import wraps
-from random import randint
+from warnings import warn
 
-__all__ = ["new_cache", "_"]
+__all__ = ["Cache", "_"]
 
 
-def new_cache(*index_on):
-    """Return the handles for submitting to and requesting from an async_deps
-    cache.
+class Cache:
+    """Manage incoming data and asynchronously dispatch it to clients."""
 
-    Paramters
-    ---------
-    *index_on : Tuple[str]
-        Lists the keys you will be querying the cache on. For example,
-        initializing the cache with:
+    def __init__(self, index_on):
+        """Initialize a cache for querying the fields listed in `index_on`."""
+        self._index_on = set(index_on)
+        self._cache = {}
+        self._unfulfilled_requests = {}
 
-        >>> my_cache = new_cache("id", "source")
+    async def request(self, **query):
+        """An awaitable that will resolve with the first submission matching `query`.
 
-        enables you to write the query:
+        Each keyword argument should name a field in `index_on` and give the
+        desired matching value to look for in submissions. For example:
 
-        >>> extra_data = await my_cache.request(id="123", source="referrals")
-
-        The keys listed in the request (in the example: "id" and "source") must
-        be present in *index_on, and conversely, the request must give a value
-        for each key in *index_on (e.g. request(source="foo") without id raise
-        a ValueError).
-
-    Returns
-    -------
-    cache : namedtuple("Cache", "request submit")
-        A cache object which you can submit data to and from which you can
-        asynchronously request data.
-
-        >>> my_cache.submit({"id": "123", "source": "referrals"})
-        >>> my_cache.submit({"id": "456", "source": "direct"})
-        >>> await my_cache.request(id="123", source="referrals")
-    """
-    index_on = set(index_on)
-    cache = {}
-    unfulfilled_requests = {}
-    # Stick a random number on the Logger name to distinguish messages from
-    # different caches
-    log = logging.getLogger(f"{__name__}.{randint(10, 99)}")
-
-    async def request(**query):
-        if set(query) != index_on:
-            raise ValueError(
-                "You requested something I'm not indexing on "
-                f"(query{set(query)} != index_on{index_on})"
-            )
-        log.debug("Handling request: %s", query)
+        >>> my_cache = Cache(index_on=["name", "occupation"])
+        >>> result = await my_cache.request(name="bob", occupation="builder")
+        >>> assert result["name"] == "bob" and result["occupation"] == "builder"
+        """
+        self._check_query(query)
         index = frozenset(query.values())
-        if index in cache:
-            log.debug("Cache hit!")
-            return cache.pop(index)
+        if index in self._cache:
+            return self._cache.pop(index)
         else:
-            log.debug("Cache miss :( Awaiting matching submission...")
             response = asyncio.Future()
-            unfulfilled_requests[index] = response
+            self._unfulfilled_requests[index] = response
             return await response
 
-    def submit(obj):
+    def submit(self, obj):
+        """Submit an object to the cache if it has all the fields in `index_on`."""
         try:
-            index = frozenset(obj[key] for key in index_on)
+            index = frozenset(obj[key] for key in self._index_on)
         except KeyError as key:
-            log.warning(
-                "Submission %s was missing index key %s. Discarding...", obj, key
-            )
+            warn(f"Submission {obj} was missing index key {key}. Discarding...")
             return
-        log.debug("Handling submission: %s", obj)
-        if index in unfulfilled_requests:
-            log.debug("Matching request!")
-            response = unfulfilled_requests.pop(index)
+        if index in self._unfulfilled_requests:
+            response = self._unfulfilled_requests.pop(index)
             response.set_result(obj)
         else:
-            log.debug("No matching request. Caching...")
-            cache[index] = obj
+            self._cache[index] = obj
 
-    def inject(**queries):
-        for arg, query in queries.items():
-            if set(query) != index_on:
-                raise ValueError(
-                    "You requested something I'm not indexing on "
-                    f"(query{set(query)} != index_on{index_on}, arg{arg})"
-                )
+    def inject(self, **queries):
+        """A decorator which supplies request results as args to the decorated function.
 
-        def _decorator(coro):
-            @wraps(coro)
+        Each keyword argument to the decorator should name an argument to the
+        decorated function and give the desired query. Only the first argument
+        cannot be injected; this is to support placeholder queries for when
+        subsequent arguments depend on the first. For example:
+
+        >>> my_cache = Cache(index_on=["company_id"])
+        >>> @my_cache.inject(employer={"company_id": _["employer_company_id"]})
+        ... def employee_data(user, employer):
+        ...     # ...
+
+        In the `employee_data` body, `employer` will be the submission whose
+        `company_id` field matched the `user`'s `employer_company_id` field.
+        Note, the decorated function will become a coroutine.
+        """
+        for query in queries.values():
+            self._check_query(query)
+
+        def _decorator(func):
+            @wraps(func)
             async def _inner(obj, *args, **kwargs):
                 requests = (
                     {k: v(obj) if callable(v) else v for k, v in query.items()}
                     for query in queries.values()
                 )
-                arg_results = await asyncio.gather(*it.starmap(request, requests))
-                return await coro(
-                    obj, *args, **kwargs, **dict(zip(queries, arg_results))
-                )
+                arg_results = await asyncio.gather(*it.starmap(self.request, requests))
+                result = func(obj, *args, **kwargs, **dict(zip(queries, arg_results)))
+                if inspect.isawaitable(result):
+                    result = await result
+                return result
 
         return _decorator
 
-    return namedtuple("Cache", "request submit inject")(request, submit, inject)
+    def _check_query(self, query):
+        if set(query) != self._index_on:
+            raise ValueError(
+                "You requested something I'm not indexing on "
+                f"(query{set(query)} != index_on{self._index_on})"
+            )
 
 
 class _DeferredItemAccess:
-    def __getitem__(self, name):
-        return op.itemgetter(name)
+    __getitem__ = op.itemgetter
 
 
 _ = _DeferredItemAccess()

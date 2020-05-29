@@ -12,7 +12,7 @@ import pandas as pd
 from fish.predict import COLUMNS, setup_model
 
 # Each batch will be an object with a "batch_id" and "data"
-CACHE = async_deps.new_cache("batch_id", "key")
+CACHE = async_deps.Cache(index_on=["batch_id", "key"])
 
 
 def regress(fish_batch, model):

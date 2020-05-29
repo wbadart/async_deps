@@ -17,9 +17,9 @@ pip install git+https://github.com/wbadart/async_deps.git
 Now request the data you need:
 
 ```py
-from async_deps import new_cache
+from async_deps import Cache
 
-cache = new_cache("name", "occupation")
+cache = Cache("name", "occupation")
 
 async def my_processor(message):
     extra_data = await cache.request(name="bob", occupation="builder")

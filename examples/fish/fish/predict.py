@@ -37,7 +37,7 @@ def regress(fish, model):
 # Final classification
 # ==========
 
-CACHE = async_deps.new_cache("ID", "key")
+CACHE = async_deps.Cache(index_on=["ID", "key"])
 
 
 async def classify(fish, model):
