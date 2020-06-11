@@ -18,10 +18,10 @@ __all__ = ["Cache", "_"]
 class Cache:
     """Manage incoming data and asynchronously dispatch it to clients."""
 
-    def __init__(self, index_on):
+    def __init__(self, index_on, cache=None):
         """Initialize a cache for querying the fields listed in `index_on`."""
         self._index_on = set(index_on)
-        self._cache = {}
+        self._cache = cache if cache is not None else {}
         self._unfulfilled_requests = {}
 
     async def request(self, **query):
